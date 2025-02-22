@@ -1,0 +1,193 @@
+.reader-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    position: relative;
+    outline: none !important;
+    
+    /* Optional: add a subtle indicator when focused */
+    &:focus {
+        box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.1);
+    }
+}
+
+.reader-container.dark-mode {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --control-bg: #2d2d2d;
+    --control-border: #3d3d3d;
+    --control-hover: #4d4d4d;
+}
+
+.reader-container:not(.dark-mode) {
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --control-bg: #f5f5f5;
+    --control-border: #e0e0e0;
+    --control-hover: #e8e8e8;
+}
+
+.reader-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    padding: 4rem;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-group input[type="number"],
+.control-group input[type="range"] {
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 4px;
+    padding: 0.5rem;
+    color: var(--text-color);
+}
+
+.control-group input[type="number"] {
+    width: 80px;
+}
+
+.control-group input[type="range"] {
+    width: 150px;
+}
+
+.control-group button {
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.control-group button:hover:not(:disabled) {
+    background-color: var(--control-hover);
+}
+
+.control-group button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.word-display {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.word-container {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 90%;
+    word-break: break-word;
+}
+
+textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1rem;
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-family: 'Arial', sans-serif;
+    resize: vertical;
+}
+
+.font-size-value {
+    min-width: 60px;
+}
+
+@media (max-width: 768px) {
+    .reader-container {
+        padding: 1rem;
+    }
+
+    .reader-container.fullscreen {
+        padding: 2rem;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group input[type="range"] {
+        width: 100%;
+    }
+
+    .word-display {
+        min-height: 200px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .reader {
+    --background-color: #1a1a1a;
+    --surface-color: #2d2d2d;
+    --text-color: #ffffff;
+    --text-color-secondary: #a0a0a0;
+    --primary-color: #4a9eff;
+    --primary-color-hover: #3b8be6;
+    --border-color: #404040;
+  }
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  .reader {
+    --background-color: #ffffff;
+    --surface-color: #f5f5f5;
+    --text-color: #000000;
+    --text-color-secondary: #666666;
+    --primary-color: #007bff;
+    --primary-color-hover: #0056b3;
+    --border-color: #e0e0e0;
+  }
+}
+
+/* Make sure the container doesn't lose focus when clicking inside */
+.reader-container * {
+    pointer-events: auto;
+} 
