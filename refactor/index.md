@@ -12,7 +12,7 @@ This directory contains the detailed plan and checklists for migrating the RSVP 
 ## Phases
 
 ### Phase 1: Setup and Service Layer
-- [1.1 Core Services](checklists/1.1-core-services.md) - Setting up ReaderService and AuthService
+- [1.1 Core Services](checklists/1.1-core-services.md) - Setting up ReaderService and AuthService (In Progress)
 - 1.2 State Management (Coming soon)
 - 1.3 Service Integration (Coming soon)
 
@@ -37,7 +37,7 @@ This directory contains the detailed plan and checklists for migrating the RSVP 
 - 5.3 Final Validation
 
 ## Current Status
-- [ ] Phase 1.1: Core Services Setup (In Progress)
+- [x] Phase 1.1: Core Services Setup (ReaderService and AuthService implemented)
 - [ ] Phase 1.2: State Management
 - [ ] Phase 1.3: Service Integration
 - [ ] Phase 2: Component Creation

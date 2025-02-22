@@ -4,10 +4,7 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf';
 import JSZip from 'jszip';
 
 // Initialize PDF.js worker
-GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/legacy/build/pdf.worker.js',
-  import.meta.url
-).href;
+GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 export class RSVPReader {
   private text: string = '';
