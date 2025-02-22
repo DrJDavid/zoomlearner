@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { Reader } from './components/Reader';
 import { supabase } from './lib/supabase';
-import { ChakraProvider, ColorModeScript } from '@chakra-ui/react'
-import { theme } from './theme' // we'll create this next
+import { ChakraProvider } from '@chakra-ui/react'
+import { ColorModeProvider } from './components/ui/color-mode'
+import { theme } from './theme'
 
 interface AppProps {
     currentText?: string;
@@ -93,16 +94,17 @@ export const App: React.FC<AppProps> = ({
 
     return (
         <ChakraProvider theme={theme}>
-            <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-            <Reader
-                initialText={currentText}
-                initialSpeed={currentSpeed}
-                initialFontSize={currentFontSize}
-                onProgressChange={handleProgressChange}
-                onSpeedChange={handleSpeedChange}
-                onFontSizeChange={handleFontSizeChange}
-                onSave={handleSave}
-            />
+            <ColorModeProvider>
+                <Reader
+                    initialText={currentText}
+                    initialSpeed={currentSpeed}
+                    initialFontSize={currentFontSize}
+                    onProgressChange={handleProgressChange}
+                    onSpeedChange={handleSpeedChange}
+                    onFontSizeChange={handleFontSizeChange}
+                    onSave={handleSave}
+                />
+            </ColorModeProvider>
         </ChakraProvider>
     );
 }; 

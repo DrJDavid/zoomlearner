@@ -1,62 +1,67 @@
 import {
   VStack,
   HStack,
-  IconButton,
-  Slider,
+  Button,
+  Slider as ChakraSlider,
   SliderTrack,
-  SliderFilledTrack,
-  SliderThumb,
+  SliderFilledTrack as ChakraSliderFilledTrack,
+  SliderThumb as ChakraSliderThumb,
   Text,
-  Tooltip,
+  Box,
   useColorMode,
 } from '@chakra-ui/react'
+import { IconType } from 'react-icons'
 import { FaPlay, FaPause, FaSun, FaMoon } from 'react-icons/fa'
 import { useContext } from 'react'
 import { ReaderContext } from '../../store/ReaderContext'
 
 export function Controls() {
   const context = useContext(ReaderContext)
-  const { colorMode, toggleColorMode } = useColorMode()
-
   if (!context) return null
+  
   const { isPlaying, speed, playReader, pauseReader, setReaderSpeed } = context
+  const { colorMode, toggleColorMode } = useColorMode()
+  const isDark = colorMode === 'dark'
+
+  const PlayIcon = isPlaying ? FaPause : FaPlay
+  const ThemeIcon = isDark ? FaSun : FaMoon
 
   return (
-    <VStack spacing={4} p={4}>
-      <HStack spacing={4} width="full" justify="center">
-        <IconButton
-          aria-label={isPlaying ? 'Pause' : 'Play'}
-          icon={isPlaying ? <FaPause /> : <FaPlay />}
+    <VStack gap={4} align="stretch">
+      <HStack gap={4} justify="center">
+        <Button
           onClick={() => isPlaying ? pauseReader() : playReader()}
-          size="lg"
-          variant="reader"
-        />
-        <IconButton
-          aria-label={`Switch to ${colorMode === 'light' ? 'dark' : 'light'} mode`}
-          icon={colorMode === 'light' ? <FaMoon /> : <FaSun />}
+          colorScheme="blue"
+          size="md"
+          leftIcon={<PlayIcon />}
+        >
+          {isPlaying ? 'Pause' : 'Play'}
+        </Button>
+        <Button
           onClick={toggleColorMode}
-          size="lg"
-        />
+          size="md"
+          leftIcon={<ThemeIcon />}
+        >
+          {isDark ? 'Light' : 'Dark'}
+        </Button>
       </HStack>
-
-      <HStack width="full" spacing={8}>
-        <Text minWidth="4rem">{speed} WPM</Text>
-        <Tooltip label={`${speed} words per minute`}>
-          <Slider
-            aria-label="Reading speed"
-            value={speed}
-            min={60}
-            max={1000}
-            step={10}
-            onChange={setReaderSpeed}
-          >
-            <SliderTrack>
-              <SliderFilledTrack />
-            </SliderTrack>
-            <SliderThumb />
-          </Slider>
-        </Tooltip>
-      </HStack>
+      <Box px={4}>
+        <Text mb={2}>Reading Speed: {speed} WPM</Text>
+        <ChakraSlider
+          aria-label="reading-speed-slider"
+          value={speed}
+          min={100}
+          max={800}
+          step={10}
+          onChange={setReaderSpeed}
+          focusThumbOnChange={false}
+        >
+          <SliderTrack>
+            <ChakraSliderFilledTrack />
+          </SliderTrack>
+          <ChakraSliderThumb />
+        </ChakraSlider>
+      </Box>
     </VStack>
   )
 } 
