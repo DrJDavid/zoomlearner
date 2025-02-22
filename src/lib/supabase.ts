@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database, Json } from '../types/database.types'
 
-// Extend ImportMetaEnv interface
-declare module 'vite/client' {
+// Type declaration for Vite's env
+declare global {
   interface ImportMetaEnv {
-    readonly VITE_SUPABASE_URL: string;
-    readonly VITE_SUPABASE_ANON_KEY: string;
+    readonly VITE_SUPABASE_URL: string
+    readonly VITE_SUPABASE_ANON_KEY: string
   }
 }
 
