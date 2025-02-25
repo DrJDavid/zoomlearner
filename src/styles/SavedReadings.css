@@ -1,0 +1,234 @@
+.saved-readings {
+    padding: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 24px;
+}
+
+.saved-readings h3 {
+    margin: 0 0 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.saved-readings h3::before {
+    content: "📚";
+    font-size: 20px;
+}
+
+.readings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reading-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.reading-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.reading-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reading-info h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.reading-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.date::before {
+    content: "🕒";
+    font-size: 12px;
+}
+
+.stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stats::before {
+    content: "⚡";
+    font-size: 12px;
+}
+
+.reading-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.load-button,
+.delete-button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.load-button {
+    background: #4a9eff;
+    color: white;
+    border: none;
+    flex: 1;
+}
+
+.delete-button {
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 6px 12px;
+}
+
+/* Remove the icons since they're causing layout issues */
+.load-button::before,
+.delete-button::before {
+    display: none;
+}
+
+.loading,
+.no-readings,
+.error-message {
+    text-align: center;
+    padding: 24px;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.loading {
+    color: #666;
+    background: #f8f9fa;
+}
+
+.no-readings {
+    color: #666;
+    background: #f8f9fa;
+    border: 2px dashed #ddd;
+}
+
+.error-message {
+    color: #dc3545;
+    background: #fdf0f0;
+    border: 1px solid #fad7d7;
+}
+
+/* Dark mode */
+.saved-readings.dark {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.saved-readings.dark h3 {
+    color: #e0e0e0;
+}
+
+.saved-readings.dark .reading-item {
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.saved-readings.dark .reading-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.saved-readings.dark .reading-info h4 {
+    color: #e0e0e0;
+}
+
+.saved-readings.dark .reading-meta {
+    color: #999;
+}
+
+.saved-readings.dark .delete-button {
+    color: #ff8f8f;
+    border-color: #ff8f8f;
+}
+
+.saved-readings.dark .delete-button:hover {
+    background: #ff8f8f;
+    color: #1a1a1a;
+}
+
+.saved-readings.dark .loading,
+.saved-readings.dark .no-readings {
+    background: #2a2a2a;
+    color: #999;
+}
+
+.saved-readings.dark .no-readings {
+    border-color: #444;
+}
+
+.saved-readings.dark .error-message {
+    background: #3d2525;
+    color: #ff8f8f;
+    border-color: #5a2828;
+}
+
+/* SavedReadings dropdown styles */
+.chakra-menu__menu-button {
+    width: 100%;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.chakra-menu__menu-button:hover {
+    transform: translateY(-1px);
+}
+
+.chakra-menu__menuitem {
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .chakra-menu__menuitem {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .chakra-menu__menuitem:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Loading state */
+.chakra-menu__menu-button[data-loading] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Divider color in dark mode */
+[data-theme="dark"] .chakra-menu__divider {
+    border-color: rgba(255, 255, 255, 0.1);
+} 

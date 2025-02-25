@@ -1,0 +1,566 @@
+.reader-container {
+    display: flex;
+    min-height: 100vh;
+    background: #fff;
+    color: #333;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    outline: none;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Dark mode */
+.reader-container.dark-mode {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.reader-container.dark-mode .word-display {
+    color: #e0e0e0;
+    background: #1a1a1a;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.reader-container.dark-mode .reader-controls {
+    background: rgba(26, 26, 26, 0.95);
+    border: none !important;
+    color: #e0e0e0;
+    box-shadow: none !important;
+}
+
+.reader-container.dark-mode button {
+    background: #333;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+.reader-container.dark-mode button:hover:not(:disabled) {
+    background: #444;
+}
+
+.reader-container.dark-mode input {
+    background: #333;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+.reader-container.dark-mode .auth-button {
+    background: #4a9eff;
+    color: #fff;
+    border: none;
+}
+
+.reader-container.dark-mode .auth-button:hover {
+    background: #3b8be6;
+}
+
+/* Controls panel */
+.reader-controls {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100vh;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.97);
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+}
+
+.reader-controls.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.fullscreen .reader-controls:not(.hidden) {
+    background: rgba(255, 255, 255, 0.97);
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dark-mode .reader-controls {
+    background: rgba(26, 26, 26, 0.97);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Fullscreen mode */
+.reader-container.fullscreen {
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.reader-container.fullscreen.dark-mode {
+    background: #1a1a1a;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.reader-container.fullscreen .reader-controls {
+    display: none;
+}
+
+.reader-container.fullscreen:hover .reader-controls {
+    display: none;
+}
+
+.reader-container.fullscreen .word-display {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Control groups */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.dark-mode .control-group label {
+    color: #999;
+}
+
+/* Inputs */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dark-mode input[type="range"] {
+    background: #444;
+}
+
+input[type="number"],
+input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.dark-mode input[type="number"],
+.dark-mode input[type="text"] {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+/* Buttons */
+button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f5f5f5;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+button:hover:not(:disabled) {
+    background: #e9e9e9;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dark-mode button {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+.dark-mode button:hover:not(:disabled) {
+    background: #444;
+}
+
+/* Auth button */
+.auth-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-weight: 500;
+}
+
+.auth-button:hover {
+    background: #0056b3;
+}
+
+.dark-mode .auth-button {
+    background: #4a9eff;
+}
+
+.dark-mode .auth-button:hover {
+    background: #3b8be6;
+}
+
+.url-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background: var(--surface-color);
+    color: var(--text-color);
+}
+
+.text-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background: var(--surface-color);
+    color: var(--text-color);
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.text-input:focus,
+.url-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.dark-mode .text-input,
+.dark-mode .url-input {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.dark-mode .text-input::placeholder,
+.dark-mode .url-input::placeholder {
+    color: var(--text-color-secondary);
+}
+
+/* File input styling */
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.file-label:hover {
+    background: #e9e9e9;
+}
+
+.dark-mode .file-label {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+.dark-mode .file-label:hover {
+    background: #444;
+}
+
+.reader-word {
+    font-family: system-ui, -apple-system, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+.reader-progress {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.reader-container:not(.dark-mode) {
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --control-bg: #f5f5f5;
+    --control-border: #e0e0e0;
+    --control-hover: #e8e8e8;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.control-group button {
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.control-group button:hover:not(:disabled) {
+    background-color: var(--control-hover);
+}
+
+.control-group button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.word-container {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 90%;
+    word-break: break-word;
+}
+
+textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1rem;
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-family: 'Arial', sans-serif;
+    resize: vertical;
+}
+
+.font-size-value {
+    min-width: 60px;
+}
+
+@media (max-width: 768px) {
+    .reader-container {
+        padding: 1rem;
+    }
+
+    .reader-container.fullscreen {
+        padding: 2rem;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group input[type="range"] {
+        width: 100%;
+    }
+
+    .word-display {
+        min-height: 200px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .reader {
+    --background-color: #1a1a1a;
+    --surface-color: #2d2d2d;
+    --text-color: #ffffff;
+    --text-color-secondary: #a0a0a0;
+    --primary-color: #4a9eff;
+    --primary-color-hover: #3b8be6;
+    --border-color: #404040;
+  }
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  .reader {
+    --background-color: #ffffff;
+    --surface-color: #f5f5f5;
+    --text-color: #000000;
+    --text-color-secondary: #666666;
+    --primary-color: #007bff;
+    --primary-color-hover: #0056b3;
+    --border-color: #e0e0e0;
+  }
+}
+
+/* Make sure the container doesn't lose focus when clicking inside */
+.reader-container * {
+    pointer-events: auto;
+}
+
+/* Word display */
+.word-display {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 280px;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: 500;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+    letter-spacing: -0.02em;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    margin: 0;
+}
+
+.fullscreen .word-display {
+    right: 0;
+}
+
+.dark-mode .word-display {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.save-button {
+    width: 100%;
+    padding: 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s;
+}
+
+.save-button:hover {
+    background: #218838;
+}
+
+.dark-mode .save-button {
+    background: #2ea44f;
+}
+
+.dark-mode .save-button:hover {
+    background: #2c974b;
+}
+
+/* Remove any potential borders in fullscreen */
+.reader-container.fullscreen {
+    border: none !important;
+    outline: none !important;
+}
+
+.reader-container.fullscreen * {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Ensure dark mode has no borders */
+.reader-container.dark-mode,
+.reader-container.dark-mode .word-display,
+.reader-container.dark-mode.fullscreen {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Override any potential border styles */
+.reader-container.dark-mode *,
+.reader-container.fullscreen.dark-mode * {
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove borders from all modes */
+.reader-container,
+.reader-container *,
+.reader-container.dark-mode,
+.reader-container.dark-mode *,
+.reader-container.fullscreen,
+.reader-container.fullscreen * {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+} 

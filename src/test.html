@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basic Test</title>
+</head>
+<body>
+    <h1>Basic Test Page</h1>
+    <div id="output"></div>
+
+    <script>
+        alert('Testing 123');
+        console.log('Basic console test');
+        
+        const output = document.getElementById('output');
+        output.innerHTML = 'If you see this, JavaScript is working';
+        
+        document.addEventListener('keydown', (e) => {
+            console.log('Key pressed:', e.code);
+            output.innerHTML += `<br>Key pressed: ${e.code}`;
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- Prevent caching during development -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ZoomLearner - Speed Reading App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <!-- Environment Variables Configuration -->
+    <script src="/env-config.js"></script>
+  <script type="module" crossorigin src="/assets/index-Dazhy0Xw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cll2_Y8v.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        // Unregister service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('Service Worker unregistered');
+                }
+            });
+        }
+        
+        // Debug logging
+        console.log('index.html loaded');
+        console.log('root element:', document.getElementById('root'));
+        console.log('loaded scripts:', document.querySelectorAll('script'));
+        console.log('ENV variables available:', window.__ENV ? 'Yes' : 'No');
+    </script>
+</body>
+</html> 
