@@ -1,4 +1,4 @@
-# RSVP Reader
+# ZoomLearner
 
 A web-based RSVP (Rapid Serial Visual Presentation) reader that helps you read faster by displaying one word at a time. Supports multiple file formats including TXT, Markdown, HTML, PDF, DOCX, and EPUB.
 
