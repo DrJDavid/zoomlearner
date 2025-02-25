@@ -10,6 +10,8 @@
     <meta http-equiv="Expires" content="0">
     <title>ZoomLearner - Speed Reading App</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <!-- Environment Variables Configuration -->
+    <script src="/env-config.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -29,6 +31,7 @@
         console.log('index.html loaded');
         console.log('root element:', document.getElementById('root'));
         console.log('loaded scripts:', document.querySelectorAll('script'));
+        console.log('ENV variables available:', window.__ENV ? 'Yes' : 'No');
     </script>
 </body>
 </html> 

@@ -9,27 +9,55 @@ declare global {
   }
 }
 
-// Get environment variables based on environment
+// Function to safely access environment variables that may not be available immediately in some environments
+function getEnvVariable(key: string): string | undefined {
+  if (typeof window !== 'undefined' && (window as any).__ENV && (window as any).__ENV[key]) {
+    return (window as any).__ENV[key];
+  }
+  
+  if (import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  
+  return undefined;
+}
+
+// Get Supabase URL from environment variables
 const supabaseUrl = process.env.NODE_ENV === 'test'
   ? process.env.VITE_SUPABASE_URL || 'http://localhost:54321'
-  : import.meta.env.VITE_SUPABASE_URL;
+  : getEnvVariable('VITE_SUPABASE_URL');
 
+// Get Supabase key from environment variables
 const supabaseKey = process.env.NODE_ENV === 'test'
   ? process.env.VITE_SUPABASE_ANON_KEY || 'mock-key'
-  : import.meta.env.VITE_SUPABASE_ANON_KEY;
+  : getEnvVariable('VITE_SUPABASE_ANON_KEY');
 
 // Add console logs to help debug environment variable issues
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Supabase URL available:', !!supabaseUrl);
 console.log('Supabase Key available:', !!supabaseKey);
 
-// Check for missing environment variables
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Supabase configuration is missing. Please check your environment variables.');
-  throw new Error('Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are properly set in your environment or .env file.');
+// Create Supabase client only if we have the required configuration
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
+
+try {
+  if (supabaseUrl && supabaseKey) {
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseKey);
+  } else {
+    console.error('Supabase configuration is missing. Please check your environment variables.');
+    console.error('VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY are not available.');
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey)
+// Export the client, ensuring it exists before use
+export const supabase = supabaseClient!;
+
+// Helper function to check if Supabase is properly initialized
+export function isSupabaseInitialized(): boolean {
+  return !!supabaseClient;
+}
 
 // Database table schemas
 export const TABLES = {
