@@ -18,8 +18,15 @@ const supabaseKey = process.env.NODE_ENV === 'test'
   ? process.env.VITE_SUPABASE_ANON_KEY || 'mock-key'
   : import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Add console logs to help debug environment variable issues
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Supabase URL available:', !!supabaseUrl);
+console.log('Supabase Key available:', !!supabaseKey);
+
+// Check for missing environment variables
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.error('Supabase configuration is missing. Please check your environment variables.');
+  throw new Error('Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are properly set in your environment or .env file.');
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey)
