@@ -34,12 +34,13 @@ const debouncedSave = debounce(async (
     }
 
     try {
-        const { error } = await saveReading(user.id, {
-            text_content: text,
-            current_word_index: readerRef.current.getCurrentIndex(),
-            wpm: speed,
-            font_size: fontSize
-        });
+        const { error } = await saveReading(
+            user.id, 
+            text, 
+            readerRef.current.getCurrentIndex(), 
+            speed, 
+            fontSize
+        );
 
         if (error) throw error;
         
@@ -367,26 +368,52 @@ export const Reader: React.FC<ReaderProps> = ({
         if (!user || !readerRef.current) return;
 
         try {
-            const { error } = await saveReading(
-                user.id,
-                currentText,
-                currentWordIndex,
-                readerRef.current.getSpeed(),
-                fontSize,
-                saveTitle
-            );
+            setIsSaving(true);
+            const currentText = text;
+            const currentWordIndex = readerRef.current.getCurrentIndex();
+            // Generate a title from the first few words or use default
+            const generateTitle = () => {
+                if (!currentText || currentText.trim().length === 0) {
+                    return new Date().toLocaleString();
+                }
+                const words = currentText.trim().split(' ');
+                const titleWords = words.slice(0, 5).join(' ');
+                return titleWords.length > 0 ? `${titleWords}...` : new Date().toLocaleString();
+            };
+            
+            const saveTitle = generateTitle();
+            
+            try {
+                const { error } = await saveReading(
+                    user.id,
+                    currentText,
+                    currentWordIndex,
+                    readerRef.current.getSpeed(),
+                    fontSize,
+                    saveTitle
+                );
 
-            if (error) throw error;
+                if (error) throw error;
 
-            toast({
-                title: 'Reading saved',
-                status: 'success',
-                duration: 2000,
-            });
+                toast({
+                    title: 'Reading saved',
+                    status: 'success',
+                    duration: 2000,
+                });
 
-            if (onSave) onSave();
-            setIsSaveModalOpen(false);
-            setSaveTitle('');
+                if (onSave) onSave();
+                setIsSaveModalOpen(false);
+                setSaveTitle('');
+            } catch (err) {
+                console.error('Error saving reading:', err);
+                toast({
+                    title: 'Error saving reading',
+                    description: 'Please try again',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         } catch (err) {
             console.error('Error saving reading:', err);
             toast({
@@ -396,6 +423,8 @@ export const Reader: React.FC<ReaderProps> = ({
                 duration: 5000,
                 isClosable: true,
             });
+        } finally {
+            setIsSaving(false);
         }
     };
 

@@ -208,7 +208,7 @@ export const SummariesList: React.FC<SummariesListProps> = ({ userId, isDarkMode
                                                             _hover={{ bg: isDarkMode ? 'blue.900' : 'blue.100' }}
                                                             color={isDarkMode ? 'blue.200' : 'blue.500'}
                                                             cursor="pointer"
-                                                            onClick={(e) => {
+                                                            onClick={(e: React.MouseEvent) => {
                                                                 e.stopPropagation();
                                                                 handleView(summary, e);
                                                             }}
@@ -222,7 +222,7 @@ export const SummariesList: React.FC<SummariesListProps> = ({ userId, isDarkMode
                                                             _hover={{ bg: isDarkMode ? 'red.900' : 'red.100' }}
                                                             color={isDarkMode ? 'red.200' : 'red.500'}
                                                             cursor="pointer"
-                                                            onClick={(e) => {
+                                                            onClick={(e: React.MouseEvent) => {
                                                                 e.stopPropagation();
                                                                 handleDelete(summary.id, e);
                                                             }}

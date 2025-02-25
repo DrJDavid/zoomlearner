@@ -307,7 +307,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                         _hover={{ bg: isDarkMode ? 'yellow.900' : 'yellow.100' }}
                                                         color={isDarkMode ? 'yellow.200' : 'yellow.500'}
                                                         cursor="pointer"
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleOpenAnalytics(reading);
                                                         }}
@@ -321,7 +321,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                         _hover={{ bg: isDarkMode ? 'purple.900' : 'purple.100' }}
                                                         color={isDarkMode ? 'purple.200' : 'purple.500'}
                                                         cursor="pointer"
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleOpenQuiz(reading);
                                                         }}
@@ -335,7 +335,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                         _hover={{ bg: isDarkMode ? 'blue.900' : 'blue.100' }}
                                                         color={isDarkMode ? 'blue.200' : 'blue.500'}
                                                         cursor="pointer"
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleOpenChat(reading);
                                                         }}
@@ -349,7 +349,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                         _hover={{ bg: isDarkMode ? 'green.900' : 'green.100' }}
                                                         color={isDarkMode ? 'green.200' : 'green.500'}
                                                         cursor="pointer"
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation();
                                                             handleGenerateSummary(reading);
                                                         }}
@@ -363,7 +363,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                         _hover={{ bg: isDarkMode ? 'red.900' : 'red.100' }}
                                                         color={isDarkMode ? 'red.200' : 'red.500'}
                                                         cursor="pointer"
-                                                        onClick={(e) => handleDelete(reading.id, e)}
+                                                        onClick={(e: React.MouseEvent) => handleDelete(reading.id, e)}
                                                     >
                                                         <DeleteIcon boxSize="3" />
                                                     </Box>
@@ -381,7 +381,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                                                 fontWeight="medium"
                                                 cursor="pointer"
                                                 _hover={{ bg: "blue.600" }}
-                                                onClick={(e) => {
+                                                onClick={(e: React.MouseEvent) => {
                                                     e.stopPropagation();
                                                     handleSelectReading(reading);
                                                 }}
@@ -398,7 +398,13 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
 
                 {/* Only show this when not in modal mode */}
                 {!selectedReading && (
-                    <SummariesList userId={userId} isDarkMode={isDarkMode} />
+                    <SummariesList 
+                        userId={userId} 
+                        isDarkMode={isDarkMode} 
+                        isOpen={true} 
+                        onClose={() => {}} 
+                        readingId=""
+                    />
                 )}
             </VStack>
 
@@ -409,7 +415,7 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                         onClose={() => setIsQuizOpen(false)}
                         readingId={selectedReading.id}
                         userId={userId}
-                        textContent={selectedReading.text_content}
+                        textContent={selectedReading.text_content || ''}
                         isDarkMode={isDarkMode}
                     />
                     <QuizAnalytics
@@ -433,8 +439,10 @@ export const SavedReadings: React.FC<SavedReadingsProps> = ({ userId, onSelect, 
                         isOpen={isChatOpen}
                         onClose={() => setIsChatOpen(false)}
                         isDarkMode={isDarkMode}
-                        currentText={selectedReading.text_content}
-                        currentWord={selectedReading.text_content.split(' ')[selectedReading.current_word_index]}
+                        currentText={selectedReading.text_content || ''}
+                        currentWord={selectedReading.text_content 
+                            ? selectedReading.text_content.split(' ')[selectedReading.current_word_index] || ''
+                            : ''}
                         currentSpeed={selectedReading.wpm}
                         documentId={selectedReading.document_id}
                         readingSessionId={selectedReading.id}

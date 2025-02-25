@@ -80,7 +80,14 @@ export const QuizAnalytics: React.FC<QuizAnalyticsProps> = ({
                     total_questions: data.totalQuestions,
                     score_percentage: data.scorePercentage,
                     quiz_created_at: data.quizCreatedAt,
-                    quiz_completed_at: data.quizCompletedAt
+                    quiz_completed_at: data.quizCompletedAt,
+                    // Adding missing properties required by QuizAnalytics interface
+                    correct_answers: data.quizScore || 0,
+                    accuracy_percentage: data.scorePercentage || 0,
+                    duration_seconds: 0, // Default value, update if available in your data
+                    overall_accuracy: data.scorePercentage || 0,
+                    total_correct_answers: data.quizScore || 0,
+                    total_questions_answered: data.totalQuestions || 0
                 };
                 setAnalytics(formattedData);
             } else {
