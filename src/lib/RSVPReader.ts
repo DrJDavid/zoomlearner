@@ -270,33 +270,35 @@ export class RSVPReader {
 
   public loadContent(text: string) {
     this.text = text;
-    this.words = text.split(/\s+/).filter(word => word.length > 0);
+    this.words = text
+      .trim()
+      .split(/\s+/)
+      .filter(word => word.length > 0);
     this.currentIndex = 0;
     this.onTextChange?.(text);
     this.onProgressChange?.(this.currentIndex, this.words.length);
   }
 
   public start() {
-    if (!this.words.length) return;
-
-    this.isPlaying = true;
-    const delay = 60000 / this.speed;
+    if (this.isPlaying || this.words.length === 0) return;
     
-    if (this.intervalId) {
-      window.clearInterval(this.intervalId);
-    }
+    this.isPlaying = true;
+    const interval = Math.floor(60000 / this.speed); // Convert WPM to milliseconds
     
     this.intervalId = window.setInterval(() => {
-      if (this.currentIndex < this.words.length - 1) {
-        this.currentIndex++;
-        this.onProgressChange?.(this.currentIndex, this.words.length);
-      } else {
+      if (this.currentIndex >= this.words.length - 1) {
         this.pause();
+        return;
       }
-    }, delay);
+      
+      this.currentIndex++;
+      this.onProgressChange?.(this.currentIndex, this.words.length);
+    }, interval);
   }
 
   public pause() {
+    if (!this.isPlaying) return;
+    
     this.isPlaying = false;
     if (this.intervalId) {
       window.clearInterval(this.intervalId);
@@ -305,19 +307,21 @@ export class RSVPReader {
   }
 
   public setSpeed(wpm: number) {
-    this.speed = Math.max(60, Math.min(1000, wpm));
+    this.speed = Math.max(60, Math.min(1000, wpm)); // Clamp between 60 and 1000 WPM
     this.onSpeedChange?.(this.speed);
+    
     if (this.isPlaying) {
+      // Restart the interval with new speed
       this.pause();
       this.start();
     }
   }
 
   public setCurrentIndex(index: number) {
-    if (index >= 0 && index < this.words.length) {
-      this.currentIndex = index;
-            this.onProgressChange?.(this.currentIndex, this.words.length);
-          }
+    if (index < 0 || index >= this.words.length) return;
+    
+    this.currentIndex = index;
+    this.onProgressChange?.(this.currentIndex, this.words.length);
   }
 
   public getCurrentWord(): string {

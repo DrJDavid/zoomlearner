@@ -1,5 +1,5 @@
 import { RSVPReader } from '../lib/RSVPReader';
-import EventEmitter from 'events';
+import { EventEmitter } from '../lib/EventEmitter';
 
 /**
  * Service wrapper for RSVPReader that adds event handling and React integration

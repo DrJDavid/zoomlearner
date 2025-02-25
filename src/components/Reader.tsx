@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { RSVPReader } from '../lib/RSVPReader';
-import { supabase } from '../lib/supabase';
+import { supabase, getUserPreferences, saveUserPreferences, saveReading } from '../lib/supabase';
+import { AuthModal } from './AuthModal';
 import type { User } from '@supabase/supabase-js';
+import { useColorMode, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, Input, Button, VStack } from '@chakra-ui/react';
 import '../styles/Reader.css';
+import { SavedReadings } from './SavedReadings';
+import { debounce } from 'lodash';
 
 interface ReaderProps {
     initialText?: string;
@@ -14,6 +18,41 @@ interface ReaderProps {
     onSave?: () => void;
 }
 
+// Create debounced save function outside component to prevent recreation
+const debouncedSave = debounce(async (
+    user: User,
+    text: string,
+    readerRef: React.RefObject<RSVPReader>,
+    speed: number,
+    fontSize: number,
+    setIsSaving: (saving: boolean) => void,
+    onSave?: () => void
+) => {
+    if (!user || !text.trim() || !readerRef.current) {
+        setIsSaving(false);
+        return;
+    }
+
+    try {
+        const { error } = await saveReading(user.id, {
+            text_content: text,
+            current_word_index: readerRef.current.getCurrentIndex(),
+            wpm: speed,
+            font_size: fontSize
+        });
+
+        if (error) throw error;
+        
+        // Call onSave callback if provided, but don't show alert here
+        onSave?.();
+    } catch (err) {
+        console.error('Error saving reading:', err);
+        alert('Failed to save reading. Please try again.');
+    } finally {
+        setIsSaving(false);
+    }
+}, 1000, { leading: true, trailing: false });  // Only trigger on the first call within the window
+
 export const Reader: React.FC<ReaderProps> = ({
     initialText = '',
     initialSpeed = 300,
@@ -23,6 +62,9 @@ export const Reader: React.FC<ReaderProps> = ({
     onFontSizeChange,
     onSave
 }) => {
+    const { setColorMode } = useColorMode();
+    const toast = useToast();
+
     console.log('Reader component rendering');
 
     const [text, setText] = useState(initialText);
@@ -30,9 +72,20 @@ export const Reader: React.FC<ReaderProps> = ({
     const [fontSize, setFontSize] = useState(initialFontSize);
     const [currentWord, setCurrentWord] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+        return false;
+    });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [user, setUser] = useState<User | null>(null);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [saveTitle, setSaveTitle] = useState('');
+    const [currentText, setCurrentText] = useState(initialText);
+    const [currentWordIndex, setCurrentWordIndex] = useState(0);
     
     const readerRef = useRef<RSVPReader | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +134,56 @@ export const Reader: React.FC<ReaderProps> = ({
             subscription.unsubscribe();
         };
     }, []);
+
+    // Load user preferences
+    useEffect(() => {
+        const loadUserPreferences = async () => {
+            if (!user) return;
+            
+            try {
+                const { data, error } = await getUserPreferences(user.id);
+                if (error) throw error;
+                
+                if (data) {
+                    setSpeed(data.wpm || initialSpeed);
+                    setFontSize(data.font_size || initialFontSize);
+                    if (typeof data.dark_mode === 'boolean') {
+                        setIsDarkMode(data.dark_mode);
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading preferences:', err);
+            }
+        };
+
+        loadUserPreferences();
+    }, [user]);
+
+    // Save preferences when they change
+    useEffect(() => {
+        const savePreferences = async () => {
+            if (!user) return;
+
+            try {
+                await saveUserPreferences(user.id, {
+                    wpm: speed,
+                    font_size: fontSize,
+                    dark_mode: isDarkMode
+                });
+            } catch (err) {
+                console.error('Error saving preferences:', err);
+            }
+        };
+
+        // Debounce the save operation to avoid too many requests
+        const timeoutId = setTimeout(savePreferences, 500);
+        return () => clearTimeout(timeoutId);
+    }, [user, speed, fontSize, isDarkMode]);
+
+    // Update Chakra theme when dark mode changes
+    useEffect(() => {
+        setColorMode(isDarkMode ? 'dark' : 'light');
+    }, [isDarkMode, setColorMode]);
 
     const handleStart = useCallback(() => {
         if (!readerRef.current) return;
@@ -189,224 +292,326 @@ export const Reader: React.FC<ReaderProps> = ({
         }
     };
 
+    const handleSignIn = useCallback(() => {
+        setIsAuthModalOpen(true);
+    }, []);
+
+    const handleSignOut = useCallback(async () => {
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error signing out:', error);
+            alert('Failed to sign out. Please try again.');
+        }
+    }, []);
+
+    const handleSaveReading = useCallback(() => {
+        if (!user) {
+            toast({
+                title: 'Please sign in',
+                description: 'You need to be signed in to save readings',
+                status: 'warning',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+        
+        // Open the save modal to get the title
+        setCurrentText(text);
+        setCurrentWordIndex(readerRef.current?.getCurrentIndex() || 0);
+        setIsSaveModalOpen(true);
+    }, [user, text, toast]);
+
+    const handleLoadReading = (content: string, position: number, wpm?: number, fontSize?: number) => {
+        if (!readerRef.current) return;
+        
+        readerRef.current.loadContent(content);
+        readerRef.current.setCurrentIndex(position);
+        setCurrentWord(readerRef.current.getCurrentWord());
+        
+        if (wpm) {
+            handleSpeedChange(wpm);
+        }
+        
+        if (fontSize) {
+            handleFontSizeChange(fontSize);
+        }
+    };
+
+    // Add keyboard shortcut for saving
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (user) {
+                    setIsSaveModalOpen(true);
+                } else {
+                    toast({
+                        title: 'Please sign in',
+                        description: 'You need to be signed in to save readings',
+                        status: 'warning',
+                        duration: 3000,
+                        isClosable: true,
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [user]);
+
+    const handleSave = async () => {
+        if (!user || !readerRef.current) return;
+
+        try {
+            const { error } = await saveReading(
+                user.id,
+                currentText,
+                currentWordIndex,
+                readerRef.current.getSpeed(),
+                fontSize,
+                saveTitle
+            );
+
+            if (error) throw error;
+
+            toast({
+                title: 'Reading saved',
+                status: 'success',
+                duration: 2000,
+            });
+
+            if (onSave) onSave();
+            setIsSaveModalOpen(false);
+            setSaveTitle('');
+        } catch (err) {
+            console.error('Error saving reading:', err);
+            toast({
+                title: 'Error saving reading',
+                description: 'Please try again',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
+    };
+
     return (
-        <div 
-            ref={containerRef}
-            className={`reader-container ${isDarkMode ? 'dark-mode' : ''} ${isFullscreen ? 'fullscreen' : ''}`}
-            tabIndex={-1}
-            autoFocus
-            onBlur={(e) => {
-                // Prevent focus from leaving the container unless going to an input
-                if (!(e.relatedTarget instanceof HTMLInputElement) && 
-                    !(e.relatedTarget instanceof HTMLTextAreaElement)) {
-                    e.currentTarget.focus();
-                }
-            }}
-            onKeyDown={(e: React.KeyboardEvent) => {
-                // Log every key press
-                console.log('Key pressed:', {
-                    code: e.code,
-                    key: e.key,
-                    target: (e.target as HTMLElement).tagName,
-                    activeElement: document.activeElement?.tagName
-                });
+        <>
+            <AuthModal 
+                isOpen={isAuthModalOpen} 
+                onClose={() => setIsAuthModalOpen(false)}
+                isDarkMode={isDarkMode}
+            />
+            <Modal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)}>
+                <ModalOverlay />
+                <ModalContent bg={isDarkMode ? 'gray.800' : 'white'}>
+                    <ModalHeader color={isDarkMode ? 'white' : 'gray.800'}>
+                        Save Reading
+                    </ModalHeader>
+                    <ModalCloseButton color={isDarkMode ? 'white' : 'gray.800'} />
+                    <ModalBody pb={6}>
+                        <VStack spacing={4}>
+                            <Input
+                                placeholder="Enter a title for this reading"
+                                value={saveTitle}
+                                onChange={(e) => setSaveTitle(e.target.value)}
+                                color={isDarkMode ? 'white' : 'black'}
+                                autoFocus
+                            />
+                            <Button colorScheme="blue" onClick={handleSave} w="100%">
+                                Save
+                            </Button>
+                        </VStack>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+            <div 
+                ref={containerRef}
+                className={`reader-container ${isDarkMode ? 'dark-mode' : ''} ${isFullscreen ? 'fullscreen' : ''}`}
+                tabIndex={-1}
+                autoFocus
+                onKeyDown={(e: React.KeyboardEvent) => {
+                    // Don't handle if we're in an input field
+                    if ((e.target as HTMLElement).tagName === 'INPUT') {
+                        return;
+                    }
 
-                // Don't handle if we're in an input field or textarea
-                if ((e.target as HTMLElement).tagName === 'INPUT' || 
-                    (e.target as HTMLElement).tagName === 'TEXTAREA') {
-                    return;
-                }
-
-                // Handle shortcuts
-                switch (e.code) {
-                    case 'Space':
+                    // Add Ctrl+S handler
+                    if (e.code === 'KeyS' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
-                        if (!readerRef.current) return;
-                        
-                        if (isPlaying) {
-                            handlePause();
-                        } else {
-                            handleStart();
-                        }
-                        break;
+                        handleSaveReading();
+                        return;
+                    }
 
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        handleSpeedChange(Math.min(1000, speed + 25));
-                        break;
+                    switch (e.code) {
+                        case 'Space':
+                            e.preventDefault();
+                            if (!readerRef.current) return;
+                            
+                            if (isPlaying) {
+                                handlePause();
+                            } else {
+                                handleStart();
+                            }
+                            break;
 
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        handleSpeedChange(Math.max(60, speed - 25));
-                        break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            handleSpeedChange(Math.min(1000, speed + 25));
+                            break;
 
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        if (!readerRef.current) return;
-                        const prevIndex = readerRef.current.getCurrentIndex();
-                        if (prevIndex > 0) {
-                            if (isPlaying) handlePause();
-                            readerRef.current.setCurrentIndex(prevIndex - 1);
-                            setCurrentWord(readerRef.current.getCurrentWord());
-                        }
-                        break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            handleSpeedChange(Math.max(60, speed - 25));
+                            break;
 
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        if (!readerRef.current) return;
-                        const nextIndex = readerRef.current.getCurrentIndex();
-                        const words = readerRef.current.getWords();
-                        if (nextIndex < words.length - 1) {
-                            if (isPlaying) handlePause();
-                            readerRef.current.setCurrentIndex(nextIndex + 1);
-                            setCurrentWord(readerRef.current.getCurrentWord());
-                        }
-                        break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            if (!readerRef.current) return;
+                            const prevIndex = readerRef.current.getCurrentIndex();
+                            if (prevIndex > 0) {
+                                if (isPlaying) handlePause();
+                                readerRef.current.setCurrentIndex(prevIndex - 1);
+                                setCurrentWord(readerRef.current.getCurrentWord());
+                            }
+                            break;
 
-                    case 'KeyF':
-                        if (e.ctrlKey || e.metaKey) {
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            if (!readerRef.current) return;
+                            const nextIndex = readerRef.current.getCurrentIndex();
+                            const words = readerRef.current.getWords();
+                            if (nextIndex < words.length - 1) {
+                                if (isPlaying) handlePause();
+                                readerRef.current.setCurrentIndex(nextIndex + 1);
+                                setCurrentWord(readerRef.current.getCurrentWord());
+                            }
+                            break;
+
+                        case 'KeyF':
                             e.preventDefault();
                             handleFullscreenToggle();
-                        }
-                        break;
-
-                    case 'KeyS':
-                        if ((e.ctrlKey || e.metaKey) && onSave) {
-                            e.preventDefault();
-                            if (isPlaying) handlePause();
-                            onSave();
-                        }
-                        break;
-                }
-            }}
-            style={{ outline: 'none' }}
-            role="application"
-            aria-label="RSVP Reader"
-        >
-            {/* Add keyboard shortcuts info panel */}
-            <div className="keyboard-shortcuts-info" style={{
-                position: 'fixed',
-                top: '10px',
-                right: '10px',
-                background: 'rgba(0,0,0,0.8)',
-                color: 'white',
-                padding: '10px',
-                borderRadius: '5px',
-                fontSize: '12px',
-                zIndex: 9999
-            }}>
-                <div>Keyboard Shortcuts:</div>
-                <div>Space: Play/Pause</div>
-                <div>↑/↓: Speed ±25 WPM</div>
-                <div>←/→: Navigate words</div>
-                <div>Ctrl+F: Fullscreen</div>
-                <div>Ctrl+S: Save</div>
-                <div style={{marginTop: '10px'}}>
-                    Status: {isPlaying ? 'Playing' : 'Paused'} at {speed} WPM
-                </div>
-            </div>
-            
-            <div className="debug-info" style={{ 
-                position: 'fixed', 
-                top: 0, 
-                right: 0, 
-                background: 'rgba(0,0,0,0.8)', 
-                color: 'white', 
-                padding: '10px', 
-                fontSize: '12px',
-                zIndex: 9999,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '5px'
-            }}>
-                <div>Speed: {speed} WPM</div>
-                <div>Playing: {isPlaying ? 'Yes' : 'No'}</div>
-                <div>Has Text: {text.trim() ? 'Yes' : 'No'}</div>
-                <div>Has Reader: {readerRef.current ? 'Yes' : 'No'}</div>
-                <div>Word Count: {readerRef.current?.getWords().length ?? 0}</div>
-                <div>Current Word: {currentWord}</div>
-            </div>
-            <div className="controls">
-                <div className="control-group">
-                    <button onClick={() => document.getElementById('fileInput')?.click()}>
-                        Open File
+                            break;
+                    }
+                }}
+            >
+                <div className={`reader-controls ${isFullscreen ? 'hidden' : ''}`}>
+                    <button 
+                        className="auth-button" 
+                        onClick={user ? handleSignOut : handleSignIn}
+                    >
+                        {user ? 'Sign Out' : 'Sign In'}
                     </button>
-                    <input
-                        id="fileInput"
-                        type="file"
-                        accept=".txt,.pdf,.docx,.doc,.epub,.odt,.rtf"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
-                </div>
 
-                <div className="control-group">
-                    <button onClick={handleStart} style={{ display: isPlaying ? 'none' : 'inline-block' }}>
-                        Start
-                    </button>
-                    <button onClick={handlePause} style={{ display: isPlaying ? 'inline-block' : 'none' }}>
-                        Pause
-                    </button>
-                </div>
+                    {user && text && (
+                        <button 
+                            className="save-button"
+                            onClick={handleSaveReading}
+                        >
+                            Save Reading
+                        </button>
+                    )}
 
-                <div className="control-group">
-                    <label>
-                        WPM:
+                    <div className="control-group">
+                        <label className="file-label" htmlFor="fileInput">📂 Open File</label>
+                        <input
+                            id="fileInput"
+                            type="file"
+                            className="file-input"
+                            onChange={handleFileChange}
+                            accept=".txt,.pdf,.doc,.docx,.epub,.rtf,.odt"
+                        />
+                    </div>
+
+                    <div className="control-group">
+                        <label>Size: {fontSize}px</label>
+                        <input
+                            type="range"
+                            min="32"
+                            max="128"
+                            value={fontSize}
+                            onChange={(e) => handleFontSizeChange(Number(e.target.value))}
+                        />
+                    </div>
+
+                    <div className="control-group">
+                        <label>WPM:</label>
                         <input
                             type="number"
                             min="60"
                             max="1000"
                             value={speed}
-                            onChange={(e) => handleSpeedChange(parseInt(e.target.value))}
+                            onChange={(e) => handleSpeedChange(Number(e.target.value))}
                         />
-                    </label>
-                </div>
+                    </div>
 
-                <div className="control-group">
-                    <label>
-                        Font Size:
-                        <input
-                            type="range"
-                            min="16"
-                            max="128"
-                            value={fontSize}
-                            onChange={(e) => handleFontSizeChange(parseInt(e.target.value))}
-                        />
-                        <span className="font-size-value">{fontSize}px</span>
-                    </label>
-                </div>
-
-                <div className="control-group">
-                    <button onClick={() => setIsDarkMode(!isDarkMode)}>
-                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                    </button>
-                    <button onClick={handleFullscreenToggle}>
-                        {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-                    </button>
-                    {onSave && (
-                        <button onClick={onSave} disabled={!user}>
-                            Save Bookmark
+                    <div className="button-group">
+                        <button onClick={handleStart} disabled={isPlaying}>Start</button>
+                        <button onClick={handlePause} disabled={!isPlaying}>Pause</button>
+                        <button onClick={handleFullscreenToggle}>
+                            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
                         </button>
+                        <button onClick={() => setIsDarkMode(!isDarkMode)}>
+                            {isDarkMode ? '☀️' : '🌙'}
+                        </button>
+                    </div>
+
+                    <div className="control-group">
+                        <label>Load from URL:</label>
+                        <input
+                            type="text"
+                            className="url-input"
+                            placeholder="Enter URL to read..."
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleUrlLoad((e.target as HTMLInputElement).value);
+                                }
+                            }}
+                        />
+                    </div>
+
+                    <div className="control-group">
+                        <label>Paste Text:</label>
+                        <textarea
+                            className="text-input"
+                            placeholder="Paste or type text to read..."
+                            rows={5}
+                            onChange={(e) => {
+                                if (readerRef.current) {
+                                    readerRef.current.loadContent(e.target.value);
+                                }
+                            }}
+                        />
+                    </div>
+
+                    <div className="keyboard-shortcuts">
+                        <ul>
+                            <li>Space: Play/Pause</li>
+                            <li>↑/↓: Adjust speed</li>
+                            <li>←/→: Navigate words</li>
+                            <li>F: Toggle fullscreen</li>
+                        </ul>
+                    </div>
+
+                    {user && (
+                        <>
+                            <SavedReadings 
+                                userId={user.id}
+                                onSelect={handleLoadReading}
+                                isDarkMode={isDarkMode}
+                            />
+                        </>
                     )}
                 </div>
-            </div>
 
-            <div className="word-display">
-                <div className="word-container" style={{ fontSize: `${fontSize}px` }}>
-                    {currentWord}
+                <div className="word-display" style={{ fontSize: `${fontSize}px` }}>
+                    {currentWord || 'Ready'}
                 </div>
             </div>
-
-            <textarea
-                value={text}
-                onChange={(e) => {
-                    setText(e.target.value);
-                    if (readerRef.current) {
-                        readerRef.current.loadContent(e.target.value);
-                    }
-                }}
-                placeholder="Enter or paste text here..."
-            />
-        </div>
+        </>
     );
 }; 

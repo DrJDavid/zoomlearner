@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { AuthSession, User } from '@supabase/supabase-js';
-import EventEmitter from 'events';
+import { EventEmitter } from '../lib/EventEmitter';
 
 /**
  * Service wrapper for Supabase authentication that adds event handling

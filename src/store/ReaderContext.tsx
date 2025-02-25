@@ -28,15 +28,23 @@ export const ReaderContext = createContext<ReaderContextType | null>(null);
 // Define the ReaderProvider component props
 interface ReaderProviderProps {
   children: ReactNode;
+  initialText?: string;
+  initialSpeed?: number;
+  initialFontSize?: number;
 }
 
-export function ReaderProvider({ children }: ReaderProviderProps) {
+export function ReaderProvider({ 
+  children,
+  initialText = '',
+  initialSpeed = 300,
+  initialFontSize = 64
+}: ReaderProviderProps) {
   // Initialize state variables
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(300); // Default 300 WPM
+  const [speed, setSpeed] = useState(initialSpeed);
   const [currentWord, setCurrentWord] = useState('');
-  const [text, setText] = useState('');
-  const [fontSize, setFontSizeState] = useState(64);
+  const [text, setText] = useState(initialText);
+  const [fontSize, setFontSizeState] = useState(initialFontSize);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Initialize dark mode from localStorage
     return localStorage.getItem('darkMode') === 'true';
@@ -55,6 +63,14 @@ export function ReaderProvider({ children }: ReaderProviderProps) {
     const service = readerServiceRef.current;
 
     if (service) {
+      // Load initial text if provided
+      if (initialText) {
+        service.loadContent(initialText);
+      }
+      
+      // Set initial speed
+      service.setSpeed(initialSpeed);
+
       // Subscribe to ReaderService events
       const playSubscription = () => setIsPlaying(true);
       const pauseSubscription = () => setIsPlaying(false);

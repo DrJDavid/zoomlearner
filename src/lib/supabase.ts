@@ -33,8 +33,7 @@ export const TABLES = {
   SUMMARIES: 'summaries',
   QUIZ_RESULTS: 'quiz_results',
   USER_NOTES: 'user_notes',
-  BOOKMARKS: 'bookmarks',
-  READING_STATISTICS: 'reading_statistics'
+  BOOKMARKS: 'bookmarks'
 } as const
 
 // Type for metadata in document uploads
@@ -94,47 +93,86 @@ interface ReadingSessionData {
   currentWordIndex: number
   textContent: string
   wpm: number
+  fontSize?: number
+  title?: string
 }
 
 // Reading sessions
 export async function saveReadingSession(userId: string, data: ReadingSessionData) {
-  const { error } = await supabase
-    .from(TABLES.READING_SESSIONS)
-    .insert([{
-      user_id: userId,
-      document_id: data.documentId,
-      current_word_index: data.currentWordIndex,
-      text_content: data.textContent,
+  // Use the new create_reading_session RPC function that handles storage
+  const { data: sessionId, error } = await supabase
+    .rpc('create_reading_session', {
+      content: data.textContent,
+      title: data.title || 'Reading Session',
       wpm: data.wpm,
-      timestamp: new Date().toISOString(),
-    }])
-  return { error }
+      font_size: data.fontSize || 16
+    });
+  
+  return { sessionId, error };
 }
 
 // User preferences
-export async function getUserPreferences(userId: string) {
-  const { data, error } = await supabase
-    .from(TABLES.USER_PREFERENCES)
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  return { data, error }
+interface UserPreferences {
+    wpm?: number;
+    font_size?: number;
+    dark_mode?: boolean;
+    keyboard_shortcuts?: Json;
+    reading_preferences?: Json;
+    quiz_preferences?: Json;
 }
 
-interface UserPreferences {
-  keyboard_shortcuts?: Json
-  reading_preferences?: Json
+export async function getUserPreferences(userId: string) {
+    try {
+        // First ensure preferences exist
+        const { error: ensureError } = await supabase
+            .rpc('ensure_user_preferences', { p_user_id: userId });
+        
+        if (ensureError) {
+            console.error('Error ensuring preferences:', ensureError);
+            // Continue anyway, as the preferences might already exist
+        }
+
+        // Then get preferences
+        const { data, error } = await supabase
+            .from(TABLES.USER_PREFERENCES)
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+        
+        if (error) {
+            console.error('Error fetching preferences:', error);
+            return { error };
+        }
+        
+        return { data };
+    } catch (err) {
+        console.error('Unexpected error in getUserPreferences:', err);
+        return { error: err as any };
+    }
 }
 
 export async function saveUserPreferences(userId: string, preferences: UserPreferences) {
-  const { error } = await supabase
-    .from(TABLES.USER_PREFERENCES)
-    .upsert([{
-      user_id: userId,
-      ...preferences,
-      updated_at: new Date().toISOString(),
-    }])
-  return { error }
+    try {
+        const { error } = await supabase
+            .rpc('update_user_preferences', {
+                p_user_id: userId,
+                p_wpm: preferences.wpm,
+                p_font_size: preferences.font_size,
+                p_dark_mode: preferences.dark_mode,
+                p_keyboard_shortcuts: preferences.keyboard_shortcuts,
+                p_reading_preferences: preferences.reading_preferences,
+                p_quiz_preferences: preferences.quiz_preferences
+            });
+        
+        if (error) {
+            console.error('Error saving preferences:', error);
+        }
+        
+        return { error };
+    } catch (err) {
+        console.error('Unexpected error in saveUserPreferences:', err);
+        return { error: err as any };
+    }
 }
 
 interface TextChunk {
@@ -355,44 +393,11 @@ export async function getBookmarks(userId: string, documentId: string) {
   return { data, error }
 }
 
-// Reading statistics
-export async function startReadingSession(userId: string, documentId: string) {
-  const { data, error } = await supabase
-    .from(TABLES.READING_STATISTICS)
-    .insert([{
-      user_id: userId,
-      document_id: documentId,
-      start_time: new Date().toISOString()
-    }])
-    .select()
-    .single()
-  return { data, error }
-}
-
-interface ReadingStats {
-  endTime: string
-  wordsRead: number
-  averageWpm: number
-  pauses: number
-}
-
-export async function updateReadingStatistics(sessionId: string, stats: ReadingStats) {
-  const { error } = await supabase
-    .from(TABLES.READING_STATISTICS)
-    .update({
-      end_time: stats.endTime,
-      words_read: stats.wordsRead,
-      average_wpm: stats.averageWpm,
-      pauses: stats.pauses
-    })
-    .eq('id', sessionId)
-  return { error }
-}
-
 interface DocumentProgress {
   position: number
 }
 
+// Document progress
 export async function updateDocumentProgress(documentId: string, progress: DocumentProgress) {
   const { error } = await supabase
     .from(TABLES.DOCUMENTS)
@@ -428,7 +433,7 @@ export async function updateReadingPreferences(userId: string, preferences: Json
 // Reading analytics
 export async function getReadingStats(userId: string, documentId: string) {
   const { data, error } = await supabase
-    .from(TABLES.READING_STATISTICS)
+    .from(TABLES.READING_SESSIONS)
     .select(`
       *,
       documents (
@@ -440,4 +445,99 @@ export async function getReadingStats(userId: string, documentId: string) {
     .eq('document_id', documentId)
     .order('created_at', { ascending: false })
   return { data, error }
-} 
+}
+
+// Saved readings management
+export const saveReading = async (
+    userId: string,
+    text: string,
+    position: number,
+    wpm: number,
+    fontSize?: number,
+    title?: string
+) => {
+    try {
+        // Use the new create_reading_session RPC function
+        const { data: sessionId, error } = await supabase
+          .rpc('create_reading_session', {
+            content: text,
+            title: title || new Date().toLocaleString(),
+            wpm,
+            font_size: fontSize || 16
+          });
+
+        if (error) throw error;
+        
+        // Update position separately if needed
+        if (position > 0) {
+          await supabase
+            .from('reading_sessions')
+            .update({ current_word_index: position })
+            .eq('id', sessionId);
+        }
+        
+        return { data: { id: sessionId }, error: null };
+    } catch (error) {
+        console.error('Error in saveReading:', error);
+        return { data: null, error };
+    }
+};
+
+export const getSavedReadings = async (userId: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('reading_sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error in getSavedReadings:', error);
+        return { data: null, error };
+    }
+};
+
+export async function deleteSavedReading(userId: string, readingId: string) {
+  const { error } = await supabase
+    .from(TABLES.READING_SESSIONS)
+    .delete()
+    .eq('id', readingId)
+    .eq('user_id', userId);
+  return { error };
+}
+
+// Add a new function to get reading content using the storage URL
+export const getReadingContent = async (sessionId: string) => {
+    try {
+        // First get the session to retrieve the storage_url
+        const { data: session, error: sessionError } = await supabase
+            .from('reading_sessions')
+            .select('storage_url, text_content')
+            .eq('id', sessionId)
+            .single();
+            
+        if (sessionError) throw sessionError;
+        
+        // If we have a storage_url, use the get_document_content function
+        if (session.storage_url) {
+            const { data: content, error: contentError } = await supabase
+                .rpc('get_document_content', { 
+                    doc_identifier: session.storage_url 
+                });
+                
+            if (contentError) throw contentError;
+            return { content, error: null };
+        } 
+        // Fall back to text_content during migration
+        else if (session.text_content) {
+            return { content: session.text_content, error: null };
+        }
+        
+        throw new Error('No content available for this reading session');
+    } catch (error) {
+        console.error('Error getting reading content:', error);
+        return { content: null, error };
+    }
+}; 

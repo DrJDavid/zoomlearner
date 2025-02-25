@@ -4,127 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>RSVP Reader</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Prevent caching during development -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ZoomLearner - Speed Reading App</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
 <body>
-    <div class="container">
-        <div class="control-panel">
-            <div class="file-controls">
-                <button id="openFileButton" class="secondary-button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" class="icon">
-                        <path d="M2 5a2 2 0 012-2h4l2 2h4a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" fill="currentColor"/>
-                    </svg>
-                    Open File
-                </button>
-                <span id="fileName" class="file-name"></span>
-                <input type="file" id="fileInput" 
-                    accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.odt,.rtf,.json,.js,.css,.pdf,.csv,.epub" 
-                    style="display: none">
-            </div>
-            
-            <div class="url-controls">
-                <input type="url" class="url-input" placeholder="Enter URL to read...">
-                <button class="secondary-button" id="loadUrlButton">Load URL</button>
-            </div>
-
-            <div class="controls-group">
-                <div class="controls">
-                    <label for="wpm">WPM:</label>
-                    <input type="number" id="wpm" value="300" min="60" max="1000">
-                </div>
-                <div class="font-size-controls">
-                    <label for="fontSize">Size:</label>
-                    <input type="range" id="fontSize" min="20" max="240" value="64">
-                    <span class="font-size-value">64px</span>
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button id="startButton">Start</button>
-                <button id="pauseButton">Pause</button>
-                <button id="resumeButton">Resume</button>
-                <button id="saveBookmarkButton" class="secondary-button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" class="icon">
-                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2z"/>
-                    </svg>
-                    Save Current
-                </button>
-                <button id="authButton" class="secondary-button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" class="icon">
-                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" fill="currentColor"/>
-                    </svg>
-                    <span id="authButtonText">Sign In</span>
-                </button>
-                <button id="fullscreenButton" class="secondary-button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" class="icon">
-                        <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" fill="currentColor"/>
-                    </svg>
-                    Fullscreen
-                </button>
-                <button id="darkModeButton" class="secondary-button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" class="icon">
-                        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z" fill="currentColor"/>
-                    </svg>
-                    Dark Mode
-                </button>
-            </div>
-
-            <div class="bookmarks-section">
-                <div class="bookmarks-header">
-                    <h3>Saved Readings</h3>
-                </div>
-                <div class="bookmarks-list" id="bookmarksList">
-                    <!-- Bookmarks will be inserted here -->
-                </div>
-            </div>
-
-            <div class="keyboard-shortcuts">
-                <p>Keyboard shortcuts:</p>
-                <ul>
-                    <li>Space: Play/Pause</li>
-                    <li>↑/↓: Adjust speed</li>
-                    <li>←/→: Navigate words</li>
-                    <li>Ctrl/Cmd + F: Toggle fullscreen</li>
-                    <li>Ctrl/Cmd + S: Save position</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="word-display" id="wordDisplay">
-                <div class="word-container">Ready</div>
-            </div>
-            <textarea id="textInput" placeholder="Paste your text here..."></textarea>
-        </div>
-    </div>
-    <div class="auth-modal" id="authModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Sign In / Sign Up</h2>
-                <button class="close-button" id="closeAuthModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
-                </div>
-                <div class="auth-buttons">
-                    <button id="signInButton" class="primary-button">Sign In</button>
-                    <button id="signUpButton" class="secondary-button">Sign Up</button>
-                </div>
-                <div id="authMessage" class="auth-message"></div>
-            </div>
-        </div>
-    </div>
-    <script type="module" src="/src/lib/supabase.ts"></script>
-    <script type="module" src="/src/script.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+        // Unregister service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('Service Worker unregistered');
+                }
+            });
+        }
+        
+        // Debug logging
+        console.log('index.html loaded');
+        console.log('root element:', document.getElementById('root'));
+        console.log('loaded scripts:', document.querySelectorAll('script'));
+    </script>
 </body>
 </html> 

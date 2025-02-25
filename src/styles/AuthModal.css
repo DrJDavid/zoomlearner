@@ -1,0 +1,146 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h2 {
+    margin: 0 0 1.5rem;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background: #4a9eff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s;
+}
+
+.submit-button:hover:not(:disabled) {
+    background: #3b8be6;
+}
+
+.submit-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.toggle-button {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: #4a9eff;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.toggle-button:hover {
+    text-decoration: underline;
+}
+
+.close-button {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close-button:hover {
+    background: #f5f5f5;
+}
+
+.error-message {
+    color: #dc3545;
+    margin-bottom: 1rem;
+    font-size: 14px;
+    padding: 8px;
+    background: #fdf0f0;
+    border-radius: 4px;
+}
+
+/* Dark mode */
+.modal-overlay.dark .modal-content {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.modal-overlay.dark h2 {
+    color: #e0e0e0;
+}
+
+.modal-overlay.dark .form-group input {
+    background: #333;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+.modal-overlay.dark .form-group input:focus {
+    border-color: #4a9eff;
+}
+
+.modal-overlay.dark .toggle-button {
+    color: #4a9eff;
+}
+
+.modal-overlay.dark .close-button {
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+.modal-overlay.dark .close-button:hover {
+    background: #333;
+}
+
+.modal-overlay.dark .error-message {
+    background: #3d2525;
+    color: #ff8f8f;
+} 

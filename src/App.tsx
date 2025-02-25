@@ -1,9 +1,35 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext, useEffect } from 'react';
 import { Reader } from './components/Reader';
 import { supabase } from './lib/supabase';
 import { ChakraProvider } from '@chakra-ui/react'
 import { ColorModeProvider } from './components/ui/color-mode'
 import { theme } from './theme'
+import { ReaderProvider, ReaderContext } from './store'
+
+// Temporary verification code - TO BE REMOVED after testing
+const ContextVerifier: React.FC = () => {
+    console.log('ContextVerifier mounting');
+    const readerContext = useContext(ReaderContext);
+    console.log('ContextVerifier: Context accessed');
+    
+    if (!readerContext) {
+        console.warn('ReaderContext is null!');
+        return null;
+    }
+    
+    console.log('ReaderContext Value:', {
+        isPlaying: readerContext.isPlaying,
+        speed: readerContext.speed,
+        currentWord: readerContext.currentWord,
+        text: readerContext.text,
+        fontSize: readerContext.fontSize,
+        isDarkMode: readerContext.isDarkMode,
+        currentWordIndex: readerContext.currentWordIndex,
+        hasReaderService: !!readerContext.readerService,
+        hasAuthService: !!readerContext.authService
+    });
+    return null;
+};
 
 interface AppProps {
     currentText?: string;
@@ -20,10 +46,21 @@ export const App: React.FC<AppProps> = ({
     readingSessionId,
     userId
 }) => {
-    console.log('App component rendering');
+    console.log('=== App component mounting ===');
+    
     const [currentProgress, setCurrentProgress] = useState({ index: currentWordIndex, total: 0 });
     const [currentSpeed, setCurrentSpeed] = useState(300);
     const [currentFontSize, setCurrentFontSize] = useState(64);
+
+    useEffect(() => {
+        console.log('App component mounted with:', {
+            currentText,
+            currentWordIndex,
+            documentId,
+            readingSessionId,
+            userId
+        });
+    }, []);
 
     const handleProgressChange = useCallback((index: number, total: number) => {
         setCurrentProgress({ index, total });
@@ -71,39 +108,48 @@ export const App: React.FC<AppProps> = ({
 
             if (docError) throw docError;
 
-            // Then insert the reading session
-            const { error: sessionError } = await supabase
-                .from('reading_sessions')
-                .insert([{
-                    user_id: user.id,
-                    document_id: doc.id,
-                    current_word_index: currentProgress.index,
-                    text_content: currentText,
+            // Use the create_reading_session RPC function instead of direct insert
+            const { data: sessionId, error: sessionError } = await supabase
+                .rpc('create_reading_session', {
+                    content: currentText,
+                    title: doc.title || 'Reading Session',
                     wpm: currentSpeed,
                     font_size: currentFontSize
-                }]);
+                });
 
             if (sessionError) throw sessionError;
+            
+            // Update word index if needed
+            if (currentProgress.index > 0) {
+                await supabase
+                    .from('reading_sessions')
+                    .update({ current_word_index: currentProgress.index })
+                    .eq('id', sessionId);
+            }
 
+            // Only show success alert here
             alert('Progress saved successfully!');
         } catch (error) {
             console.error('Error saving progress:', error);
-            alert('Failed to save progress. Please try again.');
+            // Don't show alert here since Reader component will handle it
         }
     }, [currentText, currentProgress, currentSpeed, currentFontSize, documentId]);
 
     return (
         <ChakraProvider theme={theme}>
             <ColorModeProvider>
-                <Reader
-                    initialText={currentText}
-                    initialSpeed={currentSpeed}
-                    initialFontSize={currentFontSize}
-                    onProgressChange={handleProgressChange}
-                    onSpeedChange={handleSpeedChange}
-                    onFontSizeChange={handleFontSizeChange}
-                    onSave={handleSave}
-                />
+                <ReaderProvider initialText={currentText} initialSpeed={currentSpeed} initialFontSize={currentFontSize}>
+                    <ContextVerifier />
+                    <Reader
+                        initialText={currentText}
+                        initialSpeed={currentSpeed}
+                        initialFontSize={currentFontSize}
+                        onProgressChange={handleProgressChange}
+                        onSpeedChange={handleSpeedChange}
+                        onFontSizeChange={handleFontSizeChange}
+                        onSave={handleSave}
+                    />
+                </ReaderProvider>
             </ColorModeProvider>
         </ChakraProvider>
     );
