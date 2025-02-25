@@ -2,6 +2,8 @@
 import 'pdfjs-dist/legacy/build/pdf';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf';
 import JSZip from 'jszip';
+// Import mammoth for Word document processing
+import mammoth from 'mammoth';
 
 // Initialize PDF.js worker
 GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -93,7 +95,7 @@ export class RSVPReader {
   private async loadWord(file: File) {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const result = await (window as any).mammoth.extractRawText({ arrayBuffer });
+      const result = await mammoth.extractRawText({ arrayBuffer });
       
       if (result.value) {
         const cleanText = result.value
@@ -204,7 +206,7 @@ export class RSVPReader {
       const arrayBuffer = await file.arrayBuffer();
       
       try {
-        const result = await (window as any).mammoth.extractRawText({ arrayBuffer });
+        const result = await mammoth.extractRawText({ arrayBuffer });
         if (result.value) {
           const cleanText = result.value
             .replace(/[\r\n]+/g, '\n')

@@ -4,21 +4,52 @@ import type { Database, Json } from '../types/database.types'
 // Type declaration for Vite's env
 declare global {
   interface ImportMetaEnv {
-    readonly VITE_SUPABASE_URL: string
-    readonly VITE_SUPABASE_ANON_KEY: string
+    readonly VITE_SUPABASE_URL?: string
+    readonly VITE_SUPABASE_ANON_KEY?: string
   }
 }
 
 // Function to safely access environment variables that may not be available immediately in some environments
 function getEnvVariable(key: string): string | undefined {
-  if (typeof window !== 'undefined' && (window as any).__ENV && (window as any).__ENV[key]) {
-    return (window as any).__ENV[key];
+  // Check for window.__ENV (runtime environment variables)
+  if (typeof window !== 'undefined' && window.__ENV) {
+    // Use type assertion for type safety
+    const env = window.__ENV as Record<string, string | undefined>;
+    if (env[key]) {
+      console.log(`Found ${key} in window.__ENV`);
+      return env[key];
+    }
   }
   
-  if (import.meta.env && import.meta.env[key]) {
-    return import.meta.env[key];
+  // Check for import.meta.env (Vite environment variables)
+  if (import.meta.env) {
+    const env = import.meta.env as Record<string, string | undefined>;
+    if (env[key]) {
+      console.log(`Found ${key} in import.meta.env`);
+      return env[key];
+    }
   }
   
+  // Try without the VITE_ prefix
+  const unprefixedKey = key.replace(/^VITE_/, '');
+  
+  if (typeof window !== 'undefined' && window.__ENV) {
+    const env = window.__ENV as Record<string, string | undefined>;
+    if (env[unprefixedKey]) {
+      console.log(`Found ${unprefixedKey} in window.__ENV`);
+      return env[unprefixedKey];
+    }
+  }
+  
+  if (import.meta.env) {
+    const env = import.meta.env as Record<string, string | undefined>;
+    if (env[unprefixedKey]) {
+      console.log(`Found ${unprefixedKey} in import.meta.env`);
+      return env[unprefixedKey];
+    }
+  }
+  
+  console.log(`Could not find ${key} in any environment variable location`);
   return undefined;
 }
 
@@ -188,6 +219,9 @@ export async function getUserPreferences(userId: string) {
 
 export async function saveUserPreferences(userId: string, preferences: UserPreferences) {
     try {
+        // Extract reading preferences
+        const readingPreferences = preferences.reading_preferences || {};
+        
         const { error } = await supabase
             .rpc('update_user_preferences', {
                 p_user_id: userId,

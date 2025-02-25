@@ -7,10 +7,12 @@
     "dev": "vite",
     "prebuild": "node scripts/generate-env-config.js",
     "build": "tsc && vite build",
+    "postbuild": "node scripts/generate-env-config.js",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "postinstall": "mkdir -p scripts && touch scripts/generate-env-config.js"
   },
   "dependencies": {
     "@chakra-ui/icons": "2.2.4",
