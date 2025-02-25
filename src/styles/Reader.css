@@ -197,6 +197,24 @@ input[type="text"] {
     transition: all 0.2s ease;
 }
 
+.font-selector {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .font-selector {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
 .dark-mode input[type="number"],
 .dark-mode input[type="text"] {
     background: #333;
@@ -563,4 +581,96 @@ textarea {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+}
+
+/* Branding */
+.brand-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 90;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.brand-container:hover {
+    opacity: 1;
+}
+
+.brand-logo {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.brand-name {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #333;
+}
+
+.dark-mode .brand-name {
+    color: #e0e0e0;
+}
+
+.fullscreen .brand-container {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fullscreen:hover .brand-container {
+    opacity: 0.8;
+    transform: translateY(0);
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 90;
+}
+
+.dark-mode .progress-bar-container {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    transition: width 0.3s ease;
+}
+
+.fullscreen .progress-bar-container {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.fullscreen:hover .progress-bar-container {
+    opacity: 1;
+}
+
+/* Make sure progress bar renders properly in fullscreen */
+.reader-container.fullscreen .progress-bar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
 } 

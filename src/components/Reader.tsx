@@ -71,6 +71,7 @@ export const Reader: React.FC<ReaderProps> = ({
     const [text, setText] = useState(initialText);
     const [speed, setSpeed] = useState(initialSpeed);
     const [fontSize, setFontSize] = useState(initialFontSize);
+    const [fontFamily, setFontFamily] = useState('system-ui, sans-serif');
     const [currentWord, setCurrentWord] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -87,6 +88,7 @@ export const Reader: React.FC<ReaderProps> = ({
     const [saveTitle, setSaveTitle] = useState('');
     const [currentText, setCurrentText] = useState(initialText);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
+    const [wordsCount, setWordsCount] = useState(0);
     
     const readerRef = useRef<RSVPReader | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +110,8 @@ export const Reader: React.FC<ReaderProps> = ({
         reader.onProgressChange = (index: number, total: number) => {
             console.log('Progress changed:', { index, total });
             setCurrentWord(reader.getCurrentWord());
+            setCurrentWordIndex(index);
+            setWordsCount(total);
             onProgressChange?.(index, total);
         };
 
@@ -148,6 +152,9 @@ export const Reader: React.FC<ReaderProps> = ({
                 if (data) {
                     setSpeed(data.wpm || initialSpeed);
                     setFontSize(data.font_size || initialFontSize);
+                    if (data.reading_preferences?.font_family) {
+                        setFontFamily(data.reading_preferences.font_family);
+                    }
                     if (typeof data.dark_mode === 'boolean') {
                         setIsDarkMode(data.dark_mode);
                     }
@@ -169,7 +176,10 @@ export const Reader: React.FC<ReaderProps> = ({
                 await saveUserPreferences(user.id, {
                     wpm: speed,
                     font_size: fontSize,
-                    dark_mode: isDarkMode
+                    dark_mode: isDarkMode,
+                    reading_preferences: {
+                        font_family: fontFamily
+                    }
                 });
             } catch (err) {
                 console.error('Error saving preferences:', err);
@@ -179,7 +189,7 @@ export const Reader: React.FC<ReaderProps> = ({
         // Debounce the save operation to avoid too many requests
         const timeoutId = setTimeout(savePreferences, 500);
         return () => clearTimeout(timeoutId);
-    }, [user, speed, fontSize, isDarkMode]);
+    }, [user, speed, fontSize, isDarkMode, fontFamily]);
 
     // Update Chakra theme when dark mode changes
     useEffect(() => {
@@ -221,6 +231,10 @@ export const Reader: React.FC<ReaderProps> = ({
         setFontSize(newSize);
         onFontSizeChange?.(newSize);
     }, [onFontSizeChange]);
+
+    const handleFontFamilyChange = useCallback((newFont: string) => {
+        setFontFamily(newFont);
+    }, []);
 
     const handleFullscreenToggle = useCallback(async () => {
         if (!containerRef.current) return;
@@ -568,6 +582,25 @@ export const Reader: React.FC<ReaderProps> = ({
                     </div>
 
                     <div className="control-group">
+                        <label>Font:</label>
+                        <select 
+                            value={fontFamily}
+                            onChange={(e) => handleFontFamilyChange(e.target.value)}
+                            className="font-selector"
+                        >
+                            <option value="system-ui, sans-serif">System</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Georgia', serif">Georgia</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                            <option value="'Arial', sans-serif">Arial</option>
+                            <option value="'Verdana', sans-serif">Verdana</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Inter', sans-serif">Inter</option>
+                        </select>
+                    </div>
+
+                    <div className="control-group">
                         <label>WPM:</label>
                         <input
                             type="number"
@@ -637,8 +670,20 @@ export const Reader: React.FC<ReaderProps> = ({
                     )}
                 </div>
 
-                <div className="word-display" style={{ fontSize: `${fontSize}px` }}>
+                <div className="brand-container">
+                    <div className="brand-logo">ZL</div>
+                    <div className="brand-name">ZoomLearner</div>
+                </div>
+
+                <div className="word-display" style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}>
                     {currentWord || 'Ready'}
+                </div>
+                
+                <div className="progress-bar-container">
+                    <div 
+                        className="progress-bar"
+                        style={{ width: `${currentWordIndex > 0 && wordsCount > 0 ? (currentWordIndex / wordsCount) * 100 : 0}%` }}
+                    ></div>
                 </div>
             </div>
         </>
